@@ -11,9 +11,13 @@ var events = require('events')
  * @param {String} type type of access control, defaults to 'user'
  * @param {Object} logger logger to use, defaults to `console`
  * @param {Function} defaultFailure default action to occur for a failure
+ * @param {Boolean} should the secure cookie flag option be set
  * @api public
  */
-module.exports = function(authenticationProvider, authenticatedAcl, unauthenticatedAcl, type, logger, defaultFailure) {
+module.exports = function(authenticationProvider, authenticatedAcl, unauthenticatedAcl, type, logger, defaultFailure, secure) {
+
+  // Cast secure option to true boolean
+  secure = !!secure
 
   if (!authenticationProvider || typeof authenticationProvider !== 'function') {
     throw new Error('authenticationProvider is required and must be a function');
@@ -68,7 +72,13 @@ module.exports = function(authenticationProvider, authenticatedAcl, unauthentica
    * @api public
    */
   function setAutoAuthenticationCookie(res, user) {
-    res.cookie(type + 'AuthenticationId', user.authenticationId, { path: '/', expired: 90000 });
+    res.cookie(type + 'AuthenticationId'
+      , user.authenticationId
+      , { path: '/'
+        , expired: 90000
+        , secure: secure
+        }
+    );
   }
 
   /**

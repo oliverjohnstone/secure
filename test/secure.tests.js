@@ -305,7 +305,8 @@ function getAccessControl(options) {
     options.unauthenticatedAcl,
     options.type,
     options.logger,
-    options.defaultFailure
+    options.defaultFailure,
+    options.secure
   );
 }
 
@@ -319,9 +320,10 @@ function getMockResponse() {
   var cookie = {};
 
   return {
-    cookie: function(name, value) {
+    cookie: function(name, value, options) {
       cookie.name = name;
       cookie.value = value;
+      cookie.options = options;
     },
     getCookie: function() {
       return cookie;
@@ -506,6 +508,48 @@ describe('access-control', function() {
           done();
         }
       );
+    });
+
+    describe('#secureFlag', function () {
+      it('should create a cookie with the secure option set to true', function (done) {
+        var accessControl = getAccessControl({ authenticationProvider: authenticate, secure: true })
+          , user = getUser()
+          , response = getMockResponse()
+          ;
+
+        accessControl.authenticate(
+          getMockRequest(),
+          response,
+          _.extend(user, { rememberMe: true }),
+          function() {
+            var cookie = response.getCookie();
+            cookie.should.have.property('options');
+            cookie.options.should.have.property('secure');
+            cookie.options.secure.should.equal(true);
+            done();
+          }
+        );
+      });
+
+      it('should create a cookie with the secure option set to false', function (done) {
+        var accessControl = getAccessControl({ authenticationProvider: authenticate, secure: false })
+          , user = getUser()
+          , response = getMockResponse()
+          ;
+
+        accessControl.authenticate(
+          getMockRequest(),
+          response,
+          _.extend(user, { rememberMe: true }),
+          function() {
+            var cookie = response.getCookie();
+            cookie.should.have.property('options');
+            cookie.options.should.have.property('secure');
+            cookie.options.secure.should.equal(false);
+            done();
+          }
+        );
+      });
     });
 
     it('should emit an authenticate event with the authed user', function(done) {
